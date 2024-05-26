@@ -1,0 +1,226 @@
+# Project: adams
+# Date: 2024-05-27 11:05:24
+# User: fracpete
+# Charset: UTF-8
+# Modules: adams-bootstrapp,adams-compress,adams-core,adams-db,adams-event,adams-excel,adams-heatmap,adams-imaging,adams-imaging-boofcv,adams-json,adams-math,adams-matlab,adams-meta,adams-ml,adams-net,adams-odf,adams-pdf,adams-pyro4,adams-python,adams-r,adams-rats-core,adams-rats-net,adams-rats-redis,adams-rats-rest,adams-rats-webservice,adams-redis,adams-rest,adams-security,adams-spectral-2dim-core,adams-spectral-2dim-handheld,adams-spectral-2dim-r,adams-spectral-2dim-rats,adams-spectral-2dim-webservice,adams-spectral-3way-core,adams-spectral-app,adams-spreadsheet,adams-terminal,adams-visualstats,adams-webservice,adams-webservice-core,adams-weka-lts,adams-xml,adams-yaml
+#
+adams.flow.control.Flow -annotation "Expects two sub-dirs in the same dir as the flow:\\n- raw\\n- output\\nThe raw directory must contain the CSV files." -error-handling ACTORS_DECIDE_TO_STOP_ON_ERROR -flow-execution-listener adams.flow.execution.NullListener -flow-restart-manager adams.flow.control.flowrestart.NullManager
+ adams.flow.standalone.CallableActors
+  adams.flow.sink.SpectrumDisplay -name 2200 -display-type adams.flow.core.displaytype.NoDisplay -writer adams.gui.print.NullWriter -color-provider adams.gui.visualization.core.DefaultColorProvider -paintlet "adams.gui.visualization.spectrum.SpectrumPaintlet -always-show-markers false -anti-aliasing-enabled false" -plot-updater "adams.flow.sink.spectrumdisplay.SimplePlotUpdater -update-interval 50"
+  adams.flow.sink.SpectrumDisplay -name F750 -display-type adams.flow.core.displaytype.NoDisplay -writer adams.gui.print.NullWriter -color-provider adams.gui.visualization.core.DefaultColorProvider -paintlet "adams.gui.visualization.spectrum.SpectrumPaintlet -always-show-markers false -anti-aliasing-enabled false" -plot-updater "adams.flow.sink.spectrumdisplay.SimplePlotUpdater -update-interval 50"
+  adams.flow.sink.SpectrumDisplay -name labspec -display-type adams.flow.core.displaytype.NoDisplay -writer adams.gui.print.NullWriter -color-provider adams.gui.visualization.core.DefaultColorProvider -paintlet "adams.gui.visualization.spectrum.SpectrumPaintlet -always-show-markers false -anti-aliasing-enabled false" -plot-updater "adams.flow.sink.spectrumdisplay.SimplePlotUpdater -update-interval 50"
+  adams.flow.sink.SpectrumDisplay -name nirone22 -display-type adams.flow.core.displaytype.NoDisplay -writer adams.gui.print.NullWriter -color-provider adams.gui.visualization.core.DefaultColorProvider -paintlet "adams.gui.visualization.spectrum.SpectrumPaintlet -always-show-markers false -anti-aliasing-enabled false" -plot-updater "adams.flow.sink.spectrumdisplay.SimplePlotUpdater -update-interval 50"
+  adams.flow.sink.SpectrumDisplay -name nirscan_nano -display-type adams.flow.core.displaytype.NoDisplay -writer adams.gui.print.NullWriter -color-provider adams.gui.visualization.core.DefaultColorProvider -paintlet "adams.gui.visualization.spectrum.SpectrumPaintlet -always-show-markers false -anti-aliasing-enabled false" -plot-updater "adams.flow.sink.spectrumdisplay.SimplePlotUpdater -update-interval 50"
+  adams.flow.sink.SpectrumDisplay -name "R1 1700" -display-type adams.flow.core.displaytype.NoDisplay -writer adams.gui.print.NullWriter -color-provider adams.gui.visualization.core.DefaultColorProvider -paintlet "adams.gui.visualization.spectrum.SpectrumPaintlet -always-show-markers false -anti-aliasing-enabled false" -plot-updater "adams.flow.sink.spectrumdisplay.SimplePlotUpdater -update-interval 50"
+  adams.flow.sink.SpectrumDisplay -name "R2 1700" -display-type adams.flow.core.displaytype.NoDisplay -writer adams.gui.print.NullWriter -color-provider adams.gui.visualization.core.DefaultColorProvider -paintlet "adams.gui.visualization.spectrum.SpectrumPaintlet -always-show-markers false -anti-aliasing-enabled false" -plot-updater "adams.flow.sink.spectrumdisplay.SimplePlotUpdater -update-interval 50"
+  adams.flow.sink.SpectrumDisplay -name "R3 1700" -display-type adams.flow.core.displaytype.NoDisplay -writer adams.gui.print.NullWriter -color-provider adams.gui.visualization.core.DefaultColorProvider -paintlet "adams.gui.visualization.spectrum.SpectrumPaintlet -always-show-markers false -anti-aliasing-enabled false" -plot-updater "adams.flow.sink.spectrumdisplay.SimplePlotUpdater -update-interval 50"
+  adams.flow.sink.SpectrumDisplay -name scio -display-type adams.flow.core.displaytype.NoDisplay -writer adams.gui.print.NullWriter -color-provider adams.gui.visualization.core.DefaultColorProvider -paintlet "adams.gui.visualization.spectrum.SpectrumPaintlet -always-show-markers false -anti-aliasing-enabled false" -plot-updater "adams.flow.sink.spectrumdisplay.SimplePlotUpdater -update-interval 50"
+  adams.flow.sink.SpectrumDisplay -name tellspec -display-type adams.flow.core.displaytype.NoDisplay -writer adams.gui.print.NullWriter -color-provider adams.gui.visualization.core.DefaultColorProvider -paintlet "adams.gui.visualization.spectrum.SpectrumPaintlet -always-show-markers false -anti-aliasing-enabled false" -plot-updater "adams.flow.sink.spectrumdisplay.SimplePlotUpdater -update-interval 50"
+  adams.flow.control.Sequence -name "save CSV" -annotation "requires variables: name - the filename, no path/ext"
+   adams.flow.transformer.DeleteStorageValue -storage-name data
+   adams.flow.control.Tee -name "generate instances"
+    adams.flow.transformer.ArrayToSequence
+    adams.flow.control.TransformerReset -var-name name
+     adams.flow.transformer.InstanceGenerator -generator "adams.data.instances.SimpleInstanceGenerator -add-sample-id true -additional TS[N] -additional CP[N] -additional ADF[N] -no-additional-prefix true -field IVOMD[N] -wave-number-as-suffix true"
+    adams.flow.control.TransformerReset -name "TransformerReset (2)" -var-name name
+     adams.flow.transformer.WekaInstanceBuffer
+    adams.flow.transformer.SetStorageValue -storage-name data
+   adams.flow.control.Trigger -name "save instances"
+    adams.flow.standalone.SetVariable -var-name output_file -var-value @{flow_dir}/output/@{name}.csv -expand-value true
+    adams.flow.source.StorageValue -storage-name data -conversion adams.data.conversion.UnknownToUnknown
+    adams.flow.sink.WekaFileWriter -output @{output_file} -use-custom true -saver "weka.core.converters.SpreadSheetSaver -writer \"adams.data.io.output.CsvSpreadSheetWriter -always-quote-text true\""
+ adams.flow.standalone.SetVariable -var-name wavenumber_header_row -var-value 1
+ adams.flow.standalone.SetVariable -name "SetVariable (2)" -var-name wavenumber_regex -var-value (.*)
+ adams.flow.standalone.SetVariable -name "SetVariable (3)" -var-name columns_with_wavenumbers -var-value 2-last
+ adams.flow.standalone.SetVariable -name "SetVariable (5)" -var-name rows_with_samples -var-value 2-last
+ adams.flow.standalone.SetVariable -name "SetVariable (6)" -var-name columns_with_meta -var-value ""
+ adams.flow.standalone.SetVariable -name "SetVariable (8)" -var-name row_sample_data_names -var-value 1
+ adams.flow.standalone.SetVariable -name "SetVariable (9)" -var-name id_column -var-value 1
+ adams.flow.source.Variable -var-name flow_dir -conversion adams.data.conversion.StringToString
+ adams.flow.control.Tee -name "Read sample data and put in storage"
+  adams.flow.transformer.AppendName -suffix raw/References.csv -use-forward-slashes true
+  adams.flow.transformer.SpreadSheetFileReader -reader "adams.data.io.input.CsvSpreadSheetReader -data-row-type adams.data.spreadsheet.DenseDataRow -spreadsheet-type adams.data.spreadsheet.DefaultSpreadSheet -separator ; -text-columns 1 -no-header true"
+  adams.flow.transformer.Convert -conversion "adams.data.conversion.SpreadSheetRowsToSampleData -row-sampledata-names 1 -rows-sampledata-values 2-last -cols-sampledata 1-last -col-id 1"
+  adams.flow.transformer.Convert -name "Convert (2)" -conversion adams.data.conversion.SampleDataArrayToMap
+  adams.flow.transformer.SetStorageValue -storage-name sampledata_map
+  adams.flow.control.Breakpoint -skip true -scope-restriction adams.flow.execution.debug.NoScopeRestriction -condition adams.flow.condition.bool.Expression
+ adams.flow.control.Tee -name "Read 2200"
+  adams.flow.transformer.AppendName -suffix raw/2200.CSV -use-forward-slashes true
+  adams.flow.transformer.SpreadSheetFileReader -reader "adams.data.io.input.CsvSpreadSheetReader -data-row-type adams.data.spreadsheet.DenseDataRow -spreadsheet-type adams.data.spreadsheet.DefaultSpreadSheet -separator ; -trim true -text-columns 1 -no-header true"
+  adams.flow.transformer.Convert -conversion "adams.data.conversion.SpreadSheetRowsToSpectra -row-wave-number @{wavenumber_header_row} -wave-number-regexp @{wavenumber_regex} -cols-amplitude @{columns_with_wavenumbers} -rows-amplitude @{rows_with_samples} -row-sampledata-names @{row_sample_data_names} -cols-sampledata @{columns_with_meta} -col-id @{id_column}"
+  adams.flow.control.ArrayProcess
+   adams.flow.control.TryCatch -error-post-processors adams.flow.control.errorpostprocessor.Null
+    adams.flow.control.SubProcess -name try
+     adams.flow.transformer.MergeSampleDataFromMap -storage-name sampledata_map
+     adams.flow.transformer.SetStorageValue -storage-name spectrum
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable 2200
+    adams.flow.control.SubProcess -name catch
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable 2200
+     adams.flow.transformer.PassThrough -skip true
+  adams.flow.control.Tee -name save
+   adams.flow.transformer.SetVariable -var-name name -var-value 2200
+   adams.flow.sink.CallableSink -callable "save CSV"
+ adams.flow.control.Tee -name "Read F750"
+  adams.flow.transformer.AppendName -suffix raw/F750.CSV -use-forward-slashes true
+  adams.flow.transformer.SpreadSheetFileReader -reader "adams.data.io.input.CsvSpreadSheetReader -data-row-type adams.data.spreadsheet.DenseDataRow -spreadsheet-type adams.data.spreadsheet.DefaultSpreadSheet -separator ; -trim true -text-columns 1 -no-header true"
+  adams.flow.transformer.Convert -conversion "adams.data.conversion.SpreadSheetRowsToSpectra -row-wave-number @{wavenumber_header_row} -wave-number-regexp @{wavenumber_regex} -cols-amplitude @{columns_with_wavenumbers} -rows-amplitude @{rows_with_samples} -row-sampledata-names @{row_sample_data_names} -cols-sampledata @{columns_with_meta} -col-id @{id_column}"
+  adams.flow.control.ArrayProcess
+   adams.flow.control.TryCatch -error-post-processors adams.flow.control.errorpostprocessor.Null
+    adams.flow.control.SubProcess -name try
+     adams.flow.transformer.MergeSampleDataFromMap -storage-name sampledata_map
+     adams.flow.transformer.SetStorageValue -storage-name spectrum
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable F750
+    adams.flow.control.SubProcess -name catch
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable F750
+     adams.flow.transformer.PassThrough -skip true
+  adams.flow.control.Tee -name save
+   adams.flow.transformer.SetVariable -var-name name -var-value F750
+   adams.flow.sink.CallableSink -callable "save CSV"
+ adams.flow.control.Tee -name "Read labspec"
+  adams.flow.transformer.AppendName -suffix raw/labspec.CSV -use-forward-slashes true
+  adams.flow.transformer.SpreadSheetFileReader -reader "adams.data.io.input.CsvSpreadSheetReader -data-row-type adams.data.spreadsheet.DenseDataRow -spreadsheet-type adams.data.spreadsheet.DefaultSpreadSheet -separator ; -trim true -text-columns 1 -no-header true"
+  adams.flow.transformer.Convert -conversion "adams.data.conversion.SpreadSheetRowsToSpectra -row-wave-number @{wavenumber_header_row} -wave-number-regexp @{wavenumber_regex} -cols-amplitude @{columns_with_wavenumbers} -rows-amplitude @{rows_with_samples} -row-sampledata-names @{row_sample_data_names} -cols-sampledata @{columns_with_meta} -col-id @{id_column}"
+  adams.flow.control.ArrayProcess
+   adams.flow.control.TryCatch -error-post-processors adams.flow.control.errorpostprocessor.Null
+    adams.flow.control.SubProcess -name try
+     adams.flow.transformer.MergeSampleDataFromMap -storage-name sampledata_map
+     adams.flow.transformer.SetStorageValue -storage-name spectrum
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable labspec
+    adams.flow.control.SubProcess -name catch
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable labspec
+     adams.flow.transformer.PassThrough -skip true
+  adams.flow.control.Tee -name save
+   adams.flow.transformer.SetVariable -var-name name -var-value labspec
+   adams.flow.sink.CallableSink -callable "save CSV"
+ adams.flow.control.Tee -name "Read nirone22"
+  adams.flow.transformer.AppendName -suffix raw/nirone22.CSV -use-forward-slashes true
+  adams.flow.transformer.SpreadSheetFileReader -reader "adams.data.io.input.CsvSpreadSheetReader -data-row-type adams.data.spreadsheet.DenseDataRow -spreadsheet-type adams.data.spreadsheet.DefaultSpreadSheet -separator ; -trim true -text-columns 1 -no-header true"
+  adams.flow.transformer.Convert -conversion "adams.data.conversion.SpreadSheetRowsToSpectra -row-wave-number @{wavenumber_header_row} -wave-number-regexp @{wavenumber_regex} -cols-amplitude @{columns_with_wavenumbers} -rows-amplitude @{rows_with_samples} -row-sampledata-names @{row_sample_data_names} -cols-sampledata @{columns_with_meta} -col-id @{id_column}"
+  adams.flow.control.ArrayProcess
+   adams.flow.control.TryCatch -error-post-processors adams.flow.control.errorpostprocessor.Null
+    adams.flow.control.SubProcess -name try
+     adams.flow.transformer.MergeSampleDataFromMap -storage-name sampledata_map
+     adams.flow.transformer.SetStorageValue -storage-name spectrum
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable nirone22
+    adams.flow.control.SubProcess -name catch
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable nirone22
+     adams.flow.transformer.PassThrough -skip true
+  adams.flow.control.Tee -name save
+   adams.flow.transformer.SetVariable -var-name name -var-value nirone22
+   adams.flow.sink.CallableSink -callable "save CSV"
+ adams.flow.control.Tee -name "Read nirscan_nano"
+  adams.flow.transformer.AppendName -suffix raw/Nirscan_nano.CSV -use-forward-slashes true
+  adams.flow.transformer.SpreadSheetFileReader -reader "adams.data.io.input.CsvSpreadSheetReader -data-row-type adams.data.spreadsheet.DenseDataRow -spreadsheet-type adams.data.spreadsheet.DefaultSpreadSheet -separator ; -trim true -text-columns 1 -no-header true"
+  adams.flow.transformer.Convert -conversion "adams.data.conversion.SpreadSheetRowsToSpectra -row-wave-number @{wavenumber_header_row} -wave-number-regexp @{wavenumber_regex} -cols-amplitude @{columns_with_wavenumbers} -rows-amplitude @{rows_with_samples} -row-sampledata-names @{row_sample_data_names} -cols-sampledata @{columns_with_meta} -col-id @{id_column}"
+  adams.flow.control.ArrayProcess
+   adams.flow.control.TryCatch -error-post-processors adams.flow.control.errorpostprocessor.Null
+    adams.flow.control.SubProcess -name try
+     adams.flow.transformer.MergeSampleDataFromMap -storage-name sampledata_map
+     adams.flow.transformer.SetStorageValue -storage-name spectrum
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable nirscan_nano
+    adams.flow.control.SubProcess -name catch
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable nirscan_nano
+     adams.flow.transformer.PassThrough -skip true
+  adams.flow.control.Tee -name save
+   adams.flow.transformer.SetVariable -var-name name -var-value nirscan_nano
+   adams.flow.sink.CallableSink -callable "save CSV"
+ adams.flow.control.Tee -name "Read R1_1700"
+  adams.flow.transformer.AppendName -suffix raw/R1_1700.CSV -use-forward-slashes true
+  adams.flow.transformer.SpreadSheetFileReader -reader "adams.data.io.input.CsvSpreadSheetReader -data-row-type adams.data.spreadsheet.DenseDataRow -spreadsheet-type adams.data.spreadsheet.DefaultSpreadSheet -separator ; -trim true -text-columns 1 -no-header true"
+  adams.flow.transformer.Convert -conversion "adams.data.conversion.SpreadSheetRowsToSpectra -row-wave-number @{wavenumber_header_row} -wave-number-regexp @{wavenumber_regex} -cols-amplitude @{columns_with_wavenumbers} -rows-amplitude @{rows_with_samples} -row-sampledata-names @{row_sample_data_names} -cols-sampledata @{columns_with_meta} -col-id @{id_column}"
+  adams.flow.control.ArrayProcess
+   adams.flow.control.TryCatch -error-post-processors adams.flow.control.errorpostprocessor.Null
+    adams.flow.control.SubProcess -name try
+     adams.flow.transformer.MergeSampleDataFromMap -storage-name sampledata_map
+     adams.flow.transformer.SetStorageValue -storage-name spectrum
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable "R1 1700"
+    adams.flow.control.SubProcess -name catch
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable "R1 1700"
+     adams.flow.transformer.PassThrough -skip true
+  adams.flow.control.Tee -name save
+   adams.flow.transformer.SetVariable -var-name name -var-value R1_1700
+   adams.flow.sink.CallableSink -callable "save CSV"
+ adams.flow.control.Tee -name "Read R2_1700"
+  adams.flow.transformer.AppendName -suffix raw/R2_1700.CSV -use-forward-slashes true
+  adams.flow.transformer.SpreadSheetFileReader -reader "adams.data.io.input.CsvSpreadSheetReader -data-row-type adams.data.spreadsheet.DenseDataRow -spreadsheet-type adams.data.spreadsheet.DefaultSpreadSheet -separator ; -trim true -text-columns 1 -no-header true"
+  adams.flow.transformer.Convert -conversion "adams.data.conversion.SpreadSheetRowsToSpectra -row-wave-number @{wavenumber_header_row} -wave-number-regexp @{wavenumber_regex} -cols-amplitude @{columns_with_wavenumbers} -rows-amplitude @{rows_with_samples} -row-sampledata-names @{row_sample_data_names} -cols-sampledata @{columns_with_meta} -col-id @{id_column}"
+  adams.flow.control.ArrayProcess
+   adams.flow.control.TryCatch -error-post-processors adams.flow.control.errorpostprocessor.Null
+    adams.flow.control.SubProcess -name try
+     adams.flow.transformer.MergeSampleDataFromMap -storage-name sampledata_map
+     adams.flow.transformer.SetStorageValue -storage-name spectrum
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable "R2 1700"
+    adams.flow.control.SubProcess -name catch
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable "R2 1700"
+     adams.flow.transformer.PassThrough -skip true
+  adams.flow.control.Tee -name save
+   adams.flow.transformer.SetVariable -var-name name -var-value R2_1700
+   adams.flow.sink.CallableSink -callable "save CSV"
+ adams.flow.control.Tee -name "Read R3_1700"
+  adams.flow.transformer.AppendName -suffix raw/R3_1700.CSV -use-forward-slashes true
+  adams.flow.transformer.SpreadSheetFileReader -reader "adams.data.io.input.CsvSpreadSheetReader -data-row-type adams.data.spreadsheet.DenseDataRow -spreadsheet-type adams.data.spreadsheet.DefaultSpreadSheet -separator ; -trim true -text-columns 1 -no-header true"
+  adams.flow.transformer.Convert -conversion "adams.data.conversion.SpreadSheetRowsToSpectra -row-wave-number @{wavenumber_header_row} -wave-number-regexp @{wavenumber_regex} -cols-amplitude @{columns_with_wavenumbers} -rows-amplitude @{rows_with_samples} -row-sampledata-names @{row_sample_data_names} -cols-sampledata @{columns_with_meta} -col-id @{id_column}"
+  adams.flow.control.ArrayProcess
+   adams.flow.control.TryCatch -error-post-processors adams.flow.control.errorpostprocessor.Null
+    adams.flow.control.SubProcess -name try
+     adams.flow.transformer.MergeSampleDataFromMap -storage-name sampledata_map
+     adams.flow.transformer.SetStorageValue -storage-name spectrum
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable "R3 1700"
+    adams.flow.control.SubProcess -name catch
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable "R3 1700"
+     adams.flow.transformer.PassThrough -skip true
+  adams.flow.control.Tee -name save
+   adams.flow.transformer.SetVariable -var-name name -var-value R3_1700
+   adams.flow.sink.CallableSink -callable "save CSV"
+ adams.flow.control.Tee -name Scio
+  adams.flow.transformer.AppendName -suffix raw/Scio.CSV -use-forward-slashes true
+  adams.flow.transformer.SpreadSheetFileReader -reader "adams.data.io.input.CsvSpreadSheetReader -data-row-type adams.data.spreadsheet.DenseDataRow -spreadsheet-type adams.data.spreadsheet.DefaultSpreadSheet -separator ; -trim true -text-columns 1 -no-header true"
+  adams.flow.transformer.Convert -conversion "adams.data.conversion.SpreadSheetRowsToSpectra -row-wave-number @{wavenumber_header_row} -wave-number-regexp @{wavenumber_regex} -cols-amplitude @{columns_with_wavenumbers} -rows-amplitude @{rows_with_samples} -row-sampledata-names @{row_sample_data_names} -cols-sampledata @{columns_with_meta} -col-id @{id_column}"
+  adams.flow.control.ArrayProcess
+   adams.flow.control.TryCatch -error-post-processors adams.flow.control.errorpostprocessor.Null
+    adams.flow.control.SubProcess -name try
+     adams.flow.transformer.MergeSampleDataFromMap -storage-name sampledata_map
+     adams.flow.transformer.SetStorageValue -storage-name spectrum
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable scio
+    adams.flow.control.SubProcess -name catch
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable scio
+     adams.flow.transformer.PassThrough -skip true
+  adams.flow.control.Tee -name save
+   adams.flow.transformer.SetVariable -var-name name -var-value Scio
+   adams.flow.sink.CallableSink -callable "save CSV"
+ adams.flow.control.Tee -name "Read Tellspec"
+  adams.flow.transformer.AppendName -suffix raw/tellspec.CSV -use-forward-slashes true
+  adams.flow.transformer.SpreadSheetFileReader -reader "adams.data.io.input.CsvSpreadSheetReader -data-row-type adams.data.spreadsheet.DenseDataRow -spreadsheet-type adams.data.spreadsheet.DefaultSpreadSheet -separator ; -trim true -text-columns 1 -no-header true"
+  adams.flow.transformer.Convert -conversion "adams.data.conversion.SpreadSheetRowsToSpectra -row-wave-number @{wavenumber_header_row} -wave-number-regexp @{wavenumber_regex} -cols-amplitude @{columns_with_wavenumbers} -rows-amplitude @{rows_with_samples} -row-sampledata-names @{row_sample_data_names} -cols-sampledata @{columns_with_meta} -col-id @{id_column}"
+  adams.flow.control.ArrayProcess
+   adams.flow.control.TryCatch -error-post-processors adams.flow.control.errorpostprocessor.Null
+    adams.flow.control.SubProcess -name try
+     adams.flow.transformer.MergeSampleDataFromMap -storage-name sampledata_map
+     adams.flow.transformer.SetStorageValue -storage-name spectrum
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable tellspec
+    adams.flow.control.SubProcess -name catch
+     adams.flow.control.Tee -name display
+      adams.flow.sink.CallableSink -callable tellspec
+     adams.flow.transformer.PassThrough -skip true
+  adams.flow.control.Tee -name save
+   adams.flow.transformer.SetVariable -var-name name -var-value Tellspec
+   adams.flow.sink.CallableSink -callable "save CSV"
